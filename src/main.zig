@@ -7,6 +7,9 @@ const Operation = enum {
     create,
     list,
     remove,
+    c,
+    l,
+    r,
 };
 
 fn createTodo(file: std.fs.File) !void {
@@ -102,20 +105,25 @@ pub fn main() !void {
         return err;
     };
     defer file.close();
+    while (true) { 
+        try stdout.writeAll("Select Option (create, list, remove, c, l, r): ");
+        const operation_str = try stdin.readUntilDelimiterAlloc(allocator, '\n', 2000);
+        defer allocator.free(operation_str);
 
-    try stdout.writeAll("Select Option (create, list, remove): ");
-    const operation_str = try stdin.readUntilDelimiterAlloc(allocator, '\n', 2000);
-    defer allocator.free(operation_str);
+        const trimmed_op = std.mem.trimRight(u8, operation_str, "\r\n");
+        const operation = std.meta.stringToEnum(Operation, trimmed_op) orelse {
+            try stdout.print("Invalid Operation: {s}\n", .{trimmed_op});
+            return;
+        };
 
-    const trimmed_op = std.mem.trimRight(u8, operation_str, "\r\n");
-    const operation = std.meta.stringToEnum(Operation, trimmed_op) orelse {
-        try stdout.print("Invalid Operation: {s}\n", .{trimmed_op});
-        return;
-    };
-
-    switch (operation) {
-        .create => try createTodo(file),
-        .list => try listTodos(file),
-        .remove => try removeTodo(file),
+        switch (operation) {
+            .create => try createTodo(file),
+            .list => try listTodos(file),
+            .remove => try removeTodo(file),
+            .c => try createTodo(file),
+            .l => try listTodos(file),
+            .r => try removeTodo(file),
+        }
     }
+
 }
